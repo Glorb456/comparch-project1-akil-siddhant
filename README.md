@@ -1,1 +1,1 @@
-# comparch-project1-akil-siddhant
+# Project 1: RV32I Processor in SystemVerilog
