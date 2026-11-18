@@ -2,6 +2,8 @@
 `include "alu.sv"
 `include "immed_gen.sv"
 `include "controller.sv"
+`include "register_file.sv"
+//orchestrates all other modules together to form RV32I processor
 
 module top (
     input logic clk, 
@@ -11,20 +13,11 @@ module top (
     output logic RGB_B
 );
 
-    localparam [3:0] INIT       = 4'd0;
-    localparam [3:0] RED        = 4'd1;
-    localparam [3:0] YELLOW     = 4'd2;
-    localparam [3:0] GREEN      = 4'd3;
-    localparam [3:0] CYAN       = 4'd4;
-    localparam [3:0] BLUE       = 4'd5;
-    localparam [3:0] MAGENTA    = 4'd6;
 
-    localparam [21:0] STATE_DWELL_CYCLES = 22'd3000000;
-
-    logic [2:0] funct3 = 3'b010;
-    logic dmem_wren = 1'b0;
-    logic [31:0] dmem_address = 31'd0;
-    logic [31:0] dmem_data_in = 31'd0;
+    logic [2:0] funct3 = 3'b010; //initial vals need to go
+    logic dmem_wren;
+    logic [31:0] dmem_address = 31'd0; // here
+    logic [31:0] dmem_data_in = 31'd0; // here
     logic [31:0] dmem_data_out;
     logic [31:0] imem_address = 31'h1000;
     logic [31:0] imem_data_out;
@@ -35,84 +28,52 @@ module top (
     logic green;
     logic blue;
 
-    logic [3:0] state = INIT;
-    logic [21:0] count = 22'd0;
+    logic [31:0] instruction_in;
+    logic [31:0] instruction_out;
+    logic [31:0] last_instruction_addr;
+    logic [31:0] pre_sel_addr;
+    logic pc_sel;
+    logic rd_sel;
+    logic sel_op1;
+    logic sel_op2;
+    logic reg_file_wren;
 
-    always_ff @(negedge clk) begin
-        imem_address <= imem_address + 1;
+
+    //program counter
+    always_ff @(negedge clk) begin //why negedge and not posedge?
+        imem_address <= last_instruction_addr;
     end
 
+    //instruction register
     always_ff @(negedge clk) begin
-        case (state)
-            INIT: begin
-                dmem_address <= 32'hFFFFFFFC;
-                dmem_data_in <= 32'hFFFF0000;
-                dmem_wren <= 1'b1;
-                count <= STATE_DWELL_CYCLES;
-                state <= RED;
-            end
-            RED: begin
-                if (count > 22'd0) begin
-                    count <= count - 1;
-                end
-                else begin
-                    dmem_data_in <= 32'hFFFFFF00;
-                    count <= STATE_DWELL_CYCLES;
-                    state <= YELLOW;
-                end
-            end
-            YELLOW: begin
-                if (count > 22'd0) begin
-                    count <= count - 1;
-                end
-                else begin
-                    dmem_data_in <= 32'hFF00FF00;
-                    count <= STATE_DWELL_CYCLES;
-                    state <= GREEN;
-                end
-            end
-            GREEN: begin
-                if (count > 22'd0) begin
-                    count <= count - 1;
-                end
-                else begin
-                    dmem_data_in <= 32'h0000FFFF;
-                    count <= STATE_DWELL_CYCLES;
-                    state <= CYAN;
-                end
-            end
-            CYAN: begin
-                if (count > 22'd0) begin
-                    count <= count - 1;
-                end
-                else begin
-                    dmem_data_in <= 32'h000000FF;
-                    count <= STATE_DWELL_CYCLES;
-                    state <= BLUE;
-                end
-            end
-            BLUE: begin
-                if (count > 22'd0) begin
-                    count <= count - 1;
-                end
-                else begin
-                    dmem_data_in <= 32'h00FF00FF;
-                    count <= STATE_DWELL_CYCLES;
-                    state <= MAGENTA;
-                end
-            end
-            MAGENTA: begin
-                if (count > 22'd0) begin
-                    count <= count - 1;
-                end
-                else begin
-                    dmem_data_in <= 32'hFFFF0000;
-                    count <= STATE_DWELL_CYCLES;
-                    state <= RED;
-                end
-            end
-        endcase
-    end
+        instruction_out <= instruction_in;
+    end 
+
+    //adder and selector logic
+    always_comb begin
+        pre_sel_addr = imem_address + 32'd4;
+        if (pc_sel) begin
+            last_instruction_addr = dmem_address;
+        end 
+        else begin
+            last_instruction_addr = pre_sel_addr;
+        end 
+    end 
+
+
+    controller #(
+
+    ) u2 (
+        .clk (clk),
+        .instruction (imem_data_out),
+        .pc_sel (pc_sel),
+        .rd_sel (rd_sel),
+        .sel_op1 (sel_op1),
+        .sel_op2 (sel_op2),
+        .reg_file_wren (reg_file_wren),
+        .dmem_wren (dmem_wren)
+    );
+
 
     memory #(
         .IMEM_INIT_FILE_PREFIX  ("rv32i_test")
