@@ -23,7 +23,7 @@ always_comb begin
         4'b0000: // Addition result
             add_result = op1 + op2;
             result = add_result;
-        4'b0001; // Subtraction result
+        4'b0001: // Subtraction result
             sub_result = op1 - op2;
             result = sub_result;
         4'b0010: // bitwise and result
@@ -32,10 +32,26 @@ always_comb begin
         4'b0011: // bitwise or result
             bitwise_or_result = op1 | op2;
             result = bitwise_or_result;
-        4'b0100; // bitwise xor result
+        4'b0100: // bitwise xor result
             bitwise_xor_result = op1 ^ op2;
             result = bitwise_xor_result;
-        
+        4'b0101: // shift left logical result
+            sll_result = op1 << op2[4:0];
+            result = sll_result;
+        4'b0110: // shift right logical result
+            srl_result = op1 >> op2[4:0];
+            result = srl_result;
+        4'b0111: // shift right arithmetic result
+            sra_result = $signed(op1) >>> op2[4:0];
+            result = sra_result;
+        4'b1000: // set less than result
+            slt_result = $signed(op1) < $signed(op2);
+            result = slt_result;
+        4'b1001: // set less than unsigned result
+            sltu_result = op1 < op2;
+            result = sltu_result;
+        default: // default case
+            result = 32'b0;
     endcase 
 end
 
