@@ -30,7 +30,8 @@ module immed_gen (
             end
             //I types (JALR included)
             7'b1100111, 7'b0000011, 7'b0010011: begin
-
+                
+                immed_val = {{20{instruction[31]}}, instruction[31:20]};
             end 
             //B (all B types)
             7'b1100011: begin

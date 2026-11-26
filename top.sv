@@ -32,16 +32,26 @@ module top (
     logic [31:0] instruction_out;
     logic [31:0] last_instruction_addr;
     logic [31:0] pre_sel_addr;
+
     logic pc_sel;
-    logic rd_sel;
+    logic rd_sel [1:0];
     logic sel_op1;
     logic sel_op2;
     logic reg_file_wren;
+    logic [4:0] rs1;
+    logic [4:0] rs2;
+    logic [4:0] rd;
+    logic [31:0] rdv;
+    logic [6:0] funct7;
+
+    logic pc_wren;
 
 
     //program counter
     always_ff @(negedge clk) begin //why negedge and not posedge?
-        imem_address <= last_instruction_addr;
+        if (pc_wren) begin
+            imem_address <= last_instruction_addr;
+        end 
     end
 
     //instruction register
@@ -60,7 +70,47 @@ module top (
         end 
     end 
 
+    //ALU and immediate gen output logic
+    always_comb begin
+    end 
 
+    //rdv mux
+    always_comb begin
+        case (rd_sel)
+            0: begin
+                rdv = dmem_address;
+            end 
+            1: begin
+                rdv = dmem_data_out;
+            end 
+            2: begin
+                rdv = pre_sel_addr;
+            end 
+            3: begin
+                rdv = immed_val;
+            end 
+        endcase
+    end 
+
+    immed_gen # (
+    ) ui (
+        .instruction (instruction),
+        .immed_val (immed_val)
+    );
+
+    register_file #(
+        
+    ) ur (
+        .clk (clk),
+        .reg_file_wren (reg_file_wren),
+        .rs1 (rs1),
+        .rs2 (rs2),
+        .rd (rd),
+        .rdv (rdv),
+        .rs1v (rs1v),
+        .rs2v (rs2v)
+    );
+ 
     controller #(
 
     ) u2 (
@@ -71,7 +121,9 @@ module top (
         .sel_op1 (sel_op1),
         .sel_op2 (sel_op2),
         .reg_file_wren (reg_file_wren),
-        .dmem_wren (dmem_wren)
+        .dmem_wren (dmem_wren),
+        .pc_wren (pc_wren),
+        .alu_op (alu_op)
     );
 
 
