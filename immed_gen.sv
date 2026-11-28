@@ -9,7 +9,7 @@ module immed_gen (
 
     always_comb begin
         case (opcode)
-            //U
+            //lui
             7'b0110111: begin
                 immed_val[31:12] = instruction[31:12];
                 immed_val[11:0] = 'b0;
@@ -30,13 +30,12 @@ module immed_gen (
             end
             //I types (JALR included)
             7'b1100111, 7'b0000011, 7'b0010011: begin
-                
+
                 immed_val = {{20{instruction[31]}}, instruction[31:20]};
             end 
             //B (all B types)
             7'b1100011: begin
                 immed_val[31:12] = {20{instruction[31]}};
-                immed_val[12] = instruction[31];
                 immed_val[11] = instruction[7];
                 immed_val[10:5] = instruction[30:25];
                 immed_val[4:1] = instruction[11:8];
