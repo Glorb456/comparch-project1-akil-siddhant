@@ -95,6 +95,15 @@ always_comb begin
 end 
 //next state logic, chooses next state based on current state and instruction
 always_comb begin
+//which instructions need which state
+// I ALU: F, D, E, W
+// Load: F, D, E, M, W
+// Store: F, D, E, M
+// Branch: F, D, E, W
+// Jal: F, D, E, W
+// Jalr: F, D, E, W
+// Lui: F, D, E, W
+// AUIPC: F, D, E, W
 end 
 
 //output logic, sets control signals
